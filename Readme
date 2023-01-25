@@ -1,1 +1,9 @@
+
+# TRAFFIC MATRIX PREDICTION
+
 Assumption: each switch is connected to only one host
+
+following in the code of monitoring module shows this assumption in a way that we extract ip address from dpid that we received stats from.
+
+    if ip_src == "10.0.0.%d" %dpid_rec:
+        traffic[int(ip_dst.split('.')[3]) - 1] += number_bytes
