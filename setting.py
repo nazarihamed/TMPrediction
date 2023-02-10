@@ -13,7 +13,10 @@ TOSHOW = False	   # For showing information in terminal
 #FOR DRSIR
 PATH_TO_FILES = "/home/csnetuofr/monitoring/TMPrediction"
 
-NUMBER_OF_NODES = 4
+NUMBER_OF_NODES = 14
+
+MONITOR_AND_DELAYDETECTOR_BOOTSTRAP_DELAY= 10 # wait to all the topology being discovered
+
 
 '''
 for 64 nodes try to run with discover 10, monitor 15, delay 13 but it seems that the monitor is not enough for the drl, 

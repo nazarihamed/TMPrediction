@@ -4,12 +4,15 @@ from operator import attrgetter
 from ryu.base import app_manager
 from ryu.ofproto import ofproto_v1_3
 
-import routing
+import Routing_STP
+import stplib
 from ryu.controller import ofp_event
 from ryu.controller.handler import MAIN_DISPATCHER, DEAD_DISPATCHER
 from ryu.controller.handler import set_ev_cls
 from ryu.lib import hub
 from ryu.lib.packet import arp, ethernet, ipv4, ipv6, ether_types, icmp
+
+from ryu.lib import dpid as dpid_lib
 
 
 
@@ -34,8 +37,8 @@ class Monitoring(app_manager.RyuApp):
     
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
     
-    _CONTEXTS = {"discovery": network_discovery.NetworkDiscovery, 
-                "routing": routing.SimpleSwitch13}
+    _CONTEXTS = {"discovery": network_discovery.NetworkDiscovery}#, 
+                # "routing": Routing_STP.Routing}
 
     def __init__(self, *args, **kwargs):
         super(Monitoring, self).__init__(*args, **kwargs)
@@ -46,7 +49,9 @@ class Monitoring(app_manager.RyuApp):
 
         self.discovery = kwargs["discovery"]
 
-        self.routing = kwargs["routing"]
+        # self.routing = kwargs["routing"]
+
+        # self.stp = kwargs['stplib']
 
         self.stats = {}
         
@@ -70,7 +75,8 @@ class Monitoring(app_manager.RyuApp):
 
         self.latest_traffic = np.zeros((setting.NUMBER_OF_NODES, setting.NUMBER_OF_NODES), dtype=object)
 
-        self.tm_cal_thread = hub.spawn(self._tm_cal)
+        self.tm_cal_thread = hub.spawn_after(setting.MONITOR_AND_DELAYDETECTOR_BOOTSTRAP_DELAY,self._tm_cal)
+
               
     def test_output(self,title = '',input=None):
         print('DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD')
@@ -186,14 +192,16 @@ class Monitoring(app_manager.RyuApp):
         for statistic in ev.msg.body:
             # print(statistic.match)
             if 'in_port' in statistic.match:
-                eth_src = statistic.match['eth_src']
-                eth_dst = statistic.match['eth_dst']
-                ip_src = statistic.match['ipv4_src']
-                ip_dst = statistic.match['ipv4_dst']
-                number_bytes = statistic.byte_count
+                if ('eth_src' in statistic.match and 'eth_dst'in statistic.match and 
+                    'ipv4_src' in statistic.match and 'ipv4_dst' in statistic.match):
+                    eth_src = statistic.match['eth_src']
+                    eth_dst = statistic.match['eth_dst']
+                    ip_src = statistic.match['ipv4_src']
+                    ip_dst = statistic.match['ipv4_dst']
+                    number_bytes = statistic.byte_count
 
-                if ip_src == "10.0.0.%d" %dpid_rec:
-                    traffic[int(ip_dst.split('.')[3]) - 1] += number_bytes
+                    if ip_src == "10.0.0.%d" %dpid_rec:
+                        traffic[int(ip_dst.split('.')[3]) - 1] += number_bytes
 
                 # self.logger.info("#################################")
                 # self.logger.info("dpid#, traffic vector: %s, %s", dpid_rec, traffic)

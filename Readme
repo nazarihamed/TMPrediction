@@ -7,3 +7,13 @@ following in the code of monitoring module shows this assumption in a way that w
 
     if ip_src == "10.0.0.%d" %dpid_rec:
         traffic[int(ip_dst.split('.')[3]) - 1] += number_bytes
+
+
+Following is the instruction to run the monitoring and forwarding module with STP enabled.
+
+run ryu controller with following command:
+    ryu-manager --observe-links monitoring.py Routing_STP.py
+
+run mininet for the following BSO topology located on Testbed/mininet directory:
+    sudo python3 bso-topo.py
+
