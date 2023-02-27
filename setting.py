@@ -2,11 +2,13 @@ DISCOVERY_PERIOD = 5# #5For discovering topology. do discovery every 5 sec
 
 MONITOR_PERIOD = 10# #5 For monitoring traffic. do monitoring every 5 sec
 
-MONITOR_AND_DELAYDETECTOR_BOOTSTRAP_DELAY= 30 # wait to all the topology being discovered
+MONITOR_AND_DELAYDETECTOR_BOOTSTRAP_DELAY= 60 # wait to all the topology being discovered
 
 DELAY_DETECTING_PERIOD = 10 #5For delay detecting. do delay detecting every 5 sec
 
 TOSHOW = False	   # For showing information in terminal
+
+TOSHOW_TM =True # For showing instantaneus Traffic Matrix in terminal
 
 # PATH_TO_FILES = "/home/csnetuofr/monitoring/TM.txt"
 
@@ -15,8 +17,7 @@ PATH_TO_FILES = "/home/csnetuofr/monitoring/TMPrediction"
 
 NUMBER_OF_NODES = 14
 
-MONITOR_AND_DELAYDETECTOR_BOOTSTRAP_DELAY= 10 # wait to all the topology being discovered
-
+NUMBER_OF_LINKS = 128
 
 '''
 for 64 nodes try to run with discover 10, monitor 15, delay 13 but it seems that the monitor is not enough for the drl, 

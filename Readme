@@ -17,3 +17,4 @@ run ryu controller with following command:
 run mininet for the following BSO topology located on Testbed/mininet directory:
     sudo python3 bso-topo.py
 
+**TODO** routing based on nx.spf and get rid of stp

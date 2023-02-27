@@ -20,7 +20,7 @@ from ryu.lib import hub
 
 import networkx as nx
 
-import setting, time, json, os
+import setting, time, json, ast, os
 
 
 class NetworkDiscovery(app_manager.RyuApp):
@@ -41,10 +41,6 @@ class NetworkDiscovery(app_manager.RyuApp):
         self.switch_mac_table = {}            # {sw: [mac, mac, ...]}
         self.arp_table = {}                   # {ip:mac}
         self.rev_arp_table = {}               # {mac:ip}
-        
-        #Added by HAMED: For testing 32 nodes Scenario
-        # for i in range(1,33):
-        #     self.access_table[(i,1)]=(f'10.0.0.{i:02d}', f'00:00:00:00:00:{i:02x}')
 
         self.links = []
         self.switches = []                    # self.switches = [dpid,]
@@ -55,9 +51,13 @@ class NetworkDiscovery(app_manager.RyuApp):
 
         self.graph = nx.DiGraph()
 
+        self.paths = {}
+
         # Get initiation delay.
         self.initiation_delay = 30
         self.start_time = time.time()
+
+        self.counter=1
 
         # Start a thread to discover network resource.
         self.discover_thread = hub.spawn(self._discover)
@@ -69,10 +69,14 @@ class NetworkDiscovery(app_manager.RyuApp):
     
     @set_ev_cls(events)
     def get_topology_data(self, ev):
-        
+        """
+            Get topology info and calculate shortest paths.
+            Note: In looped network, we should get the topology
+            20 or 30 seconds after the network went up.
+        """
         switch_list = get_switch(self, None)
         
-        self.switches=[switch for switch in switch_list]
+        self.switches=[switch for switch in switch_list] # to access each switch id => switch.dp.id
         
         links_list = get_link(self, None)
         
@@ -94,18 +98,16 @@ class NetworkDiscovery(app_manager.RyuApp):
         self.switch_interior_port_table = self.create_interior_port_table(links_list)
         
         self.switch_access_port_table = self.create_access_port_table()
-
         
         # get this once for topology and no more
         graph_dict = nx.to_dict_of_dicts(self.graph)
 
-        # if len(self.switches) == setting.NUMBER_OF_NODES:
-
-        #     file_graph = setting.PATH_TO_FILES+'/DRL/32nodes/graph_'+str(len(self.switches))+'Nodes.json'
-        #     os.makedirs(os.path.dirname(file_graph), exist_ok=True)
-        #     with open(file_graph,'w') as json_file:
-        #         json.dump(graph_dict, json_file, indent=2)
-        
+        if len(self.switches) == setting.NUMBER_OF_NODES:
+            file_graph = 'paths/graph_'+str(len(self.switches))+'Nodes.json'
+            os.makedirs(os.path.dirname(file_graph), exist_ok=True)
+            with open(file_graph,'w') as json_file:
+                json.dump(graph_dict, json_file, indent=2)
+    
         # print('topology',graph_dict)
 
         # self.shortest_paths = self.get_k_paths() 
@@ -114,9 +116,12 @@ class NetworkDiscovery(app_manager.RyuApp):
         # self.shortest_paths = self.all_k_shortest_paths(
         #     self.graph, weight='weight', k=1)
 
-        self.logger.debug("[Network Discovery Ok]")
-        
+        self.logger.info(f"[Network Discovery Ok][{self.counter}]")
+        self.counter = self.counter+1
+
         if setting.TOSHOW:
+
+            self.logger.info (f"=====================")
             self.logger.info (f"Switches:{self.switches}")
             
             self.logger.info (f"=====================")
@@ -127,7 +132,6 @@ class NetworkDiscovery(app_manager.RyuApp):
             
             self.logger.info (f"=====================")
             self.logger.info (f"graph:{nx.node_link_data(self.graph)}")
-
             
             self.logger.info (f"=====================")
             self.logger.info (f"switch_port_table:{self.switch_port_table}")
@@ -149,6 +153,8 @@ class NetworkDiscovery(app_manager.RyuApp):
 
             self.logger.info (f"=====================")
             self.logger.info (f"switch_mac_table:{self.switch_mac_table}")
+            self.logger.info (f"=====================")
+
             
     def create_interior_port_table(self, link_list):
         """
@@ -271,8 +277,25 @@ class NetworkDiscovery(app_manager.RyuApp):
             for dst in self.switches:
                 if src.dp.id == dst.dp.id:
                     _graph.add_edge(src.dp.id, dst.dp.id, weight=0)
-                elif (src, dst) in link_list:
+                elif (src.dp.id, dst.dp.id) in link_list:
                     _graph.add_edge(src.dp.id, dst.dp.id, weight=1)
                 else:
                     pass
         return _graph
+    
+    def get_paths(self):
+        file_paths = 'paths/k_paths_'+str(len(self.switches))+'Nodes.json'
+        with open(file_paths,'r') as json_file:
+            paths_dict = json.load(json_file)
+            paths = ast.literal_eval(json.dumps(paths_dict))
+            return paths
+    
+    def get_shortest_path(self, src, dst):
+        """
+        Returns the shortest path between src and dst based on k_paths.json file
+        """
+        file_paths = 'paths/k_paths_'+str(len(self.switches))+'Nodes.json'
+        with open(file_paths,'r') as json_file:
+            paths_dict = json.load(json_file)
+            paths = ast.literal_eval(json.dumps(paths_dict))
+            return paths[str(src)][str(dst)][0]

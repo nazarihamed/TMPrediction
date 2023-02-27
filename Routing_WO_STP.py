@@ -23,31 +23,16 @@ from ryu.lib.packet import arp, ethernet, ipv4, ipv6, ether_types, icmp
 from ryu.lib.packet import ether_types
 
 from ryu.lib import dpid as dpid_lib
-from ryu.lib import stplib
 from ryu.app import simple_switch_13
 
-class Routing(app_manager.RyuApp):
+class Routing(simple_switch_13.SimpleSwitch13):
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
-    _CONTEXTS = {'stplib': stplib.Stp}
-
-
+    
     def __init__(self, *args, **kwargs):
         super(Routing, self).__init__(*args, **kwargs)
         self.mac_to_port = {}
         
         self.name = "routing"
-        
-        self.stp = kwargs['stplib']
-
-        # Sample of stplib config.
-        #  please refer to stplib.Stp.set_config() for details.
-        config = {dpid_lib.str_to_dpid('0000000000000001'):
-                  {'bridge': {'priority': 0x8000}},
-                  dpid_lib.str_to_dpid('0000000000000002'):
-                  {'bridge': {'priority': 0x9000}},
-                  dpid_lib.str_to_dpid('0000000000000003'):
-                  {'bridge': {'priority': 0xa000}}}
-        self.stp.set_config(config)
 
 
     def delete_flow(self, datapath):
@@ -56,9 +41,6 @@ class Routing(app_manager.RyuApp):
 
         for dst in self.mac_to_port[datapath.id].keys():
             match = parser.OFPMatch(eth_dst=dst)
-            print("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD")
-            print(f"match of del flow {match}")
-            print("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD")
             mod = parser.OFPFlowMod(
                 datapath, command=ofproto.OFPFC_DELETE,
                 out_port=ofproto.OFPP_ANY, out_group=ofproto.OFPG_ANY,
@@ -188,26 +170,3 @@ class Routing(app_manager.RyuApp):
             out = parser.OFPPacketOut(datapath=datapath, buffer_id=msg.buffer_id,
                                     in_port=in_port, actions=actions, data=data)
             datapath.send_msg(out)
-
-
-    @set_ev_cls(stplib.EventTopologyChange, MAIN_DISPATCHER)
-    def _topology_change_handler(self, ev):
-        dp = ev.dp
-        dpid_str = dpid_lib.dpid_to_str(dp.id)
-        msg = 'Receive topology change event. Flush MAC table.'
-
-        self.logger.info("[dpid=%s] %s", dpid_str, msg)
-        if dp.id in self.mac_to_port:
-            self.delete_flow(dp)
-            del self.mac_to_port[dp.id]
-
-    @set_ev_cls(stplib.EventPortStateChange, MAIN_DISPATCHER)
-    def _port_state_change_handler(self, ev):
-        dpid_str = dpid_lib.dpid_to_str(ev.dp.id)
-        of_state = {stplib.PORT_STATE_DISABLE: 'DISABLE',
-                    stplib.PORT_STATE_BLOCK: 'BLOCK',
-                    stplib.PORT_STATE_LISTEN: 'LISTEN',
-                    stplib.PORT_STATE_LEARN: 'LEARN',
-                    stplib.PORT_STATE_FORWARD: 'FORWARD'}
-        self.logger.debug("[dpid=%s][port=%d] state=%s",
-                          dpid_str, ev.port_no, of_state[ev.port_state])

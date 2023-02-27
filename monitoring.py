@@ -27,6 +27,8 @@ import os
 
 import network_discovery
 
+import Routing_SPF
+
 import setting
 
 #Number of Nodes in the network for creating the Traffic Matrix
@@ -37,8 +39,8 @@ class Monitoring(app_manager.RyuApp):
     
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
     
-    _CONTEXTS = {"discovery": network_discovery.NetworkDiscovery}#, 
-                # "routing": Routing_STP.Routing}
+    _CONTEXTS = {"discovery": network_discovery.NetworkDiscovery, 
+                 "routing": Routing_SPF.Routing}
 
     def __init__(self, *args, **kwargs):
         super(Monitoring, self).__init__(*args, **kwargs)
@@ -49,7 +51,7 @@ class Monitoring(app_manager.RyuApp):
 
         self.discovery = kwargs["discovery"]
 
-        # self.routing = kwargs["routing"]
+        self.routing = kwargs["routing"]
 
         # self.stp = kwargs['stplib']
 
@@ -158,7 +160,8 @@ class Monitoring(app_manager.RyuApp):
                 duration = time.time() - self.start_time
                 diff_matrix = self.latest_traffic - self.previous_traffic
                 traffic_matrix = diff_matrix / max(1,int(duration)) # avoid zero in division
-                self.logger.info("Traffic Matrix: \n" + str(traffic_matrix))
+                if setting.TOSHOW_TM:
+                    self.logger.info("Traffic Matrix: \n" + str(traffic_matrix))
                 
                 file_name= self.output + "log.csv"
                 
@@ -189,19 +192,27 @@ class Monitoring(app_manager.RyuApp):
         
         traffic = np.zeros(setting.NUMBER_OF_NODES, dtype=object)
 
+        # for statistic in ev.msg.body:
+        #     # print(statistic.match)
+        #     if 'in_port' in statistic.match:
+        #         if ('eth_src' in statistic.match and 'eth_dst'in statistic.match and 
+        #             'ipv4_src' in statistic.match and 'ipv4_dst' in statistic.match):
+        #             eth_src = statistic.match['eth_src']
+        #             eth_dst = statistic.match['eth_dst']
+        #             ip_src = statistic.match['ipv4_src']
+        #             ip_dst = statistic.match['ipv4_dst']
+        #             number_bytes = statistic.byte_count
         for statistic in ev.msg.body:
-            # print(statistic.match)
-            if 'in_port' in statistic.match:
-                if ('eth_src' in statistic.match and 'eth_dst'in statistic.match and 
-                    'ipv4_src' in statistic.match and 'ipv4_dst' in statistic.match):
-                    eth_src = statistic.match['eth_src']
-                    eth_dst = statistic.match['eth_dst']
-                    ip_src = statistic.match['ipv4_src']
-                    ip_dst = statistic.match['ipv4_dst']
-                    number_bytes = statistic.byte_count
+            
+            if ('eth_type' in statistic.match and
+                'ipv4_src' in statistic.match and 'ipv4_dst' in statistic.match):
+                eth_type = statistic.match['eth_type']
+                ip_src = statistic.match['ipv4_src']
+                ip_dst = statistic.match['ipv4_dst']
+                number_bytes = statistic.byte_count
 
-                    if ip_src == "10.0.0.%d" %dpid_rec:
-                        traffic[int(ip_dst.split('.')[3]) - 1] += number_bytes
+                if ip_src == "10.0.0.%d" %dpid_rec:
+                    traffic[int(ip_dst.split('.')[3]) - 1] += number_bytes
 
                 # self.logger.info("#################################")
                 # self.logger.info("dpid#, traffic vector: %s, %s", dpid_rec, traffic)

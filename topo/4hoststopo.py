@@ -15,7 +15,8 @@ def myNetwork():
     net = Mininet( topo=None,
                    build=False,
                    ipBase='10.0.0.0/8',
-                   autoSetMacs=True)
+                   autoSetMacs=True,
+                   autoStaticArp=True)
 
     info( '*** Adding controller\n' )
     c0=net.addController(name='c0',
@@ -37,14 +38,18 @@ def myNetwork():
     h4 = net.addHost('h4', cls=Host, ip='10.0.0.4', defaultRoute=None)
 
     info( '*** Add links\n')
-    net.addLink(s1, s2)
-    net.addLink(s1, s3)
-    net.addLink(s2, s4)
-    # net.addLink(s3, s4)
+    
     net.addLink(h1, s1)
     net.addLink(h2, s2)
     net.addLink(h3, s3)
     net.addLink(h4, s4)
+    
+    
+    net.addLink(s1, s2)
+    net.addLink(s1, s3)
+    net.addLink(s2, s4)
+    # net.addLink(s3, s4)
+    
 
     info( '*** Starting network\n')
     net.build()
