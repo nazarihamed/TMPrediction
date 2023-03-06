@@ -61,7 +61,7 @@ class Monitoring(app_manager.RyuApp):
         
         self.flow_speed = {}
         
-        self.output=setting.PATH_TO_FILES+"/log/"
+        self.output="output/"
 
         self.previous_traffic = []
         
@@ -164,15 +164,21 @@ class Monitoring(app_manager.RyuApp):
                     self.logger.info("Traffic Matrix: \n" + str(traffic_matrix))
                 
                 file_name= self.output + "log.csv"
-                
+                header = ['timestamp'] + [f'10.{i+1}_10.{j+1}' for i in range(traffic_matrix.shape[0]) for j in range(traffic_matrix.shape[1])]
+
                 os.makedirs(os.path.dirname(file_name), exist_ok=True)
-                
+
                 if file_name is not None:
+                    write_header = not os.path.exists(file_name) # Check if file exists
                     with open(file_name, 'a') as f:
-                        f.write(datetime.now().strftime(format='%Y-%m-%d %H:%M:%S,'))
+                        if write_header:  # Write header if file is new
+                            f.write(','.join(header) + '\n')
+                        # f.write(datetime.now().strftime(format='%Y-%m-%d %H:%M:%S,'))
                         # f.write(datetime.now().strftime(format='%Y-%m-%d %H:%M:%S.%f,'))
-                        np.savetxt(f, traffic_matrix.ravel()[None], delimiter=',', fmt = '%s')
+                        row_data = [datetime.now().strftime(format='%Y-%m-%d %H:%M:%S')] + list(traffic_matrix.ravel())
+                        np.savetxt(f, [row_data], delimiter=',', fmt = '%s')
                 self.tm_flag = 0
+
 
     def _request_stats(self, datapath):
         self.logger.debug('send stats request: %016x', datapath.id)

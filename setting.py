@@ -2,7 +2,7 @@ DISCOVERY_PERIOD = 5# #5For discovering topology. do discovery every 5 sec
 
 MONITOR_PERIOD = 10# #5 For monitoring traffic. do monitoring every 5 sec
 
-MONITOR_AND_DELAYDETECTOR_BOOTSTRAP_DELAY= 60 # wait to all the topology being discovered
+MONITOR_AND_DELAYDETECTOR_BOOTSTRAP_DELAY= 20 # wait to all the topology being discovered
 
 DELAY_DETECTING_PERIOD = 10 #5For delay detecting. do delay detecting every 5 sec
 
@@ -13,7 +13,7 @@ TOSHOW_TM =True # For showing instantaneus Traffic Matrix in terminal
 # PATH_TO_FILES = "/home/csnetuofr/monitoring/TM.txt"
 
 #FOR DRSIR
-PATH_TO_FILES = "/home/csnetuofr/monitoring/TMPrediction"
+PATH_TO_FILES = ""
 
 NUMBER_OF_NODES = 14
 
