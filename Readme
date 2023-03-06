@@ -18,5 +18,16 @@ run ryu controller with following command:
 run mininet for the following BSO topology located on Testbed/mininet directory:
     sudo python3 bso-topo.py
 
+# Data Output format for 3x3 hosts
+    x = number of BYTES
+
+t1  |   h1h1    |   h1h2    |   h1h3    |   h2h1    |   h2h2    |   h2h3    |   h3h1    |   h3h2    |   h3h3    |
+t2  |   h1h1    |   h1h2    |   h1h3    |   h2h1    |   h2h2    |   h2h3    |   h3h1    |   h3h2    |   h3h3    |
+t3  |   h1h1    |   h1h2    |   h1h3    |   h2h1    |   h2h2    |   h2h3    |   h3h1    |   h3h2    |   h3h3    |
+.
+.
+.
+tN  |   h1h1    |   h1h2    |   h1h3    |   h2h1    |   h2h2    |   h2h3    |   h3h1    |   h3h2    |   h3h3    |
+        0           x           x           x           0           x           x           x           0
 
 **TODO** Add path metrics 
